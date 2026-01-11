@@ -1,0 +1,111 @@
+import random
+
+class Card:
+    rank_map = {
+        'A': 14,
+        'K': 13,
+        'Q': 12,
+        'J': 11
+    }
+    def __init__(self, suit, rank):
+        self.suits = suit
+        self.ranks = rank
+    def card_value(self):
+    if self.rank.isdigit():
+        return int(self.rank)
+    return self.rank_map[self.rank]    
+
+class Deck:
+    def __init__(self):
+        suits = ['スペード', 'ハート', 'クラブ', 'ダイヤ']
+        ranks = ['A'] + [str(n) for n in range(2, 11)] + ['J', 'Q', 'K']
+        self.cards = [Card(s, r) for s in suits for r in ranks]
+        random.shuffle(self.cards)
+
+    def deal(self):
+        return self.cards[:26], self.cards[26:]
+
+
+class Player:
+    def __init__(self, name, cards):
+        self.name = name
+        self.hand = cards      # 山札
+        self.stock = []        # 獲得札
+
+    def has_cards(self):
+        return len(self.hand) > 0 or len(self.stock) > 0
+
+    def draw(self):
+        if len(self.hand) == 0:
+            random.shuffle(self.stock)
+            self.hand = self.stock
+            self.stock = []
+        return self.hand.pop(0)
+
+    def gain_cards(self, cards):
+        self.stock.extend(cards)
+
+    def total_cards(self):
+        return len(self.hand) + len(self.stock)
+
+
+class WarGame:
+    def __init__(self):
+        print("戦争を開始します。")
+        deck = Deck()
+        p1_cards, p2_cards = deck.deal()
+
+        self.player1 = Player("プレイヤー1", p1_cards)
+        self.player2 = Player("プレイヤー2", p2_cards)
+        self.field = []
+
+        print("カードが配られました。")
+
+    def play(self):
+        while self.player1.has_cards() and self.player2.has_cards():
+            print("戦争！")
+
+            card1 = self.player1.draw()
+            card2 = self.player2.draw()
+
+            self.field.extend([card1, card2])
+
+            print(f'{self.player1.name}のカードは{card1}です。')
+            print(f'{self.player2.name}のカードは{card2}です。')
+
+            if card1.value() > card2.value():
+                print(f'{self.player1.name}が勝ちました。{self.player1.name}はカードを{len(self.field)}枚もらいました。')
+                self.player1.gain_cards(self.field)
+                self.field.clear()
+
+            elif card1.value() < card2.value():
+                print(f'{self.player2.name}が勝ちました。{self.player2.name}はカードを{len(self.field)}枚もらいました。')
+                self.player2.gain_cards(self.field)
+                self.field.clear()
+
+            else:
+                print("引き分けです。")
+                continue
+
+        self.finish()
+
+    def finish(self):
+        print("戦争を終了します。")
+
+        p1_total = self.player1.total_cards()
+        p2_total = self.player2.total_cards()
+
+        print(f'{self.player1.name}の手札の枚数は{p1_total}枚です。')
+        print(f'{self.player2.name}の手札の枚数は{p2_total}枚です。')
+
+        if p1_total > p2_total:
+            print("プレイヤー1が1位、プレイヤー2が2位です。")
+        elif p1_total < p2_total:
+            print("プレイヤー2が1位、プレイヤー1が2位です。")
+        else:
+            print("引き分けです。")
+
+
+# 実行
+game = WarGame()
+game.play()
