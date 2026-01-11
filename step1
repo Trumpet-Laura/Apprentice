@@ -1,0 +1,62 @@
+print ("戦争を開始します。")
+
+import random
+
+suits=['スペード','ハート','クラブ','ダイヤ']
+ranks = ['A'] + [int(n) for n in range(2, 11)] + ['J', 'Q', 'K']
+# 52枚のカード（ジョーカーなし）
+deck = [f'{suit}の{rank}' for suit in suits for rank in ranks]
+# シャッフル
+random.shuffle(deck)
+# 2人に配る（26枚ずつ）
+player1 = deck[:26]
+player2 = deck[26:]
+# 場に出たカード
+field = []
+print("カードが配られました。")
+# 1枚ずつ交互に出す
+
+rank_map = {
+    'A': 14,
+    'K': 13,
+    'Q': 12,
+    'J': 11
+}
+
+while True:
+    print("戦争！")
+
+    card1 = player1.pop(0)
+    card2 = player2.pop(0)
+
+    field.append(card1)
+    field.append(card2)
+
+    # ランク文字を取り出す
+    rank1 = card1.split('の')[1]
+    rank2 = card2.split('の')[1]
+
+    # 数値に変換
+    if rank1.isdigit():
+        p1_value = int(rank1)
+    else:
+        p1_value = rank_map[rank1]
+
+    if rank2.isdigit():
+        p2_value = int(rank2)
+    else:
+        p2_value = rank_map[rank2]
+
+    print(f'プレイヤー1のカードは{card1}です。')
+    print(f'プレイヤー2のカードは{card2}です。')
+
+    if p1_value > p2_value:
+        print("プレイヤー1が勝ちました。")
+        break
+    elif p1_value < p2_value:
+        print("プレイヤー2が勝ちました。")
+        break
+    else:
+        print("引き分けです。")
+
+print("戦争を終了します。")
