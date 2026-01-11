@@ -1,0 +1,136 @@
+import random
+
+class Card:
+    rank_map = {
+        'A': 14,
+        'K': 13,
+        'Q': 12,
+        'J': 11
+    }
+
+    def __init__(self, suit, rank):
+        self.suit = suit
+        self.rank = rank
+
+    def value(self):
+        if self.rank.isdigit():
+            return int(self.rank)
+        return self.rank_map[self.rank]
+
+    def __str__(self):
+        return f'{self.suit}の{self.rank}'
+
+
+class Deck:
+    def __init__(self):
+        suits = ['スペード', 'ハート', 'クラブ', 'ダイヤ']
+        ranks = ['A'] + [str(n) for n in range(2, 11)] + ['J', 'Q', 'K']
+        self.cards = [Card(s, r) for s in suits for r in ranks]
+        random.shuffle(self.cards)
+
+    def deal(self, player_count):
+        hands = [[] for _ in range(player_count)]
+        for i, card in enumerate(self.cards):
+            hands[i % player_count].append(card)
+        return hands
+
+
+class Player:
+    def __init__(self, name, cards):
+        self.name = name
+        self.hand = cards
+        self.stock = []
+
+    def has_cards(self):
+        return len(self.hand) > 0 or len(self.stock) > 0
+
+    def draw(self):
+        if len(self.hand) == 0:
+            random.shuffle(self.stock)
+            self.hand = self.stock
+            self.stock = []
+        return self.hand.pop(0)
+
+    def gain_cards(self, cards):
+        self.stock.extend(cards)
+
+    def total_cards(self):
+        return len(self.hand) + len(self.stock)
+
+
+class WarGame:
+    def __init__(self):
+        print("戦争を開始します。")
+
+        while True:
+            count = int(input("プレイヤーの人数を入力してください（2〜5）: "))
+            if 2 <= count <= 5:
+                break
+
+        self.players = []
+        for i in range(count):
+            name = input(f"プレイヤー{i+1}の名前を入力してください: ")
+            self.players.append(name)
+
+        deck = Deck()
+        hands = deck.deal(count)
+
+        self.players = [
+            Player(name, hands[i])
+            for i, name in enumerate(self.players)
+        ]
+
+        self.field = []
+
+        print("カードが配られました。")
+
+    def play(self):
+        while all(player.has_cards() for player in self.players):
+            print("戦争！")
+
+            round_cards = []
+            max_value = -1
+
+            for player in self.players:
+                card = player.draw()
+                round_cards.append((player, card))
+                self.field.append(card)
+                print(f'{player.name}のカードは{card}です。')
+
+                max_value = max(max_value, card.value())
+
+            winners = [
+                player for player, card in round_cards
+                if card.value() == max_value
+            ]
+
+            if len(winners) == 1:
+                winner = winners[0]
+                print(f'{winner.name}が勝ちました。{winner.name}はカードを{len(self.field)}枚もらいました。')
+                winner.gain_cards(self.field)
+                self.field.clear()
+            else:
+                print("引き分けです。")
+                continue
+
+        self.finish()
+
+    def finish(self):
+        print("戦争を終了します。")
+
+        results = sorted(
+            self.players,
+            key=lambda p: p.total_cards(),
+            reverse=True
+        )
+
+        for p in self.players:
+            print(f'{p.name}の手札の枚数は{p.total_cards()}枚です。')
+
+        for i, p in enumerate(results):
+            print(f'{p.name}が{i+1}位です。')
+
+
+# 実行
+game = WarGame()
+game.play()
