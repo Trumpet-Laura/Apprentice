@@ -1,0 +1,160 @@
+import random
+
+class Card:
+    rank_map = {
+        'A': 14,
+        'K': 13,
+        'Q': 12,
+        'J': 11
+    }
+
+    def __init__(self, suit, rank, is_joker=False):
+        self.suit = suit
+        self.rank = rank
+        self.is_joker = is_joker
+
+    def value(self):
+        if self.is_joker:
+            return 100  # ジョーカーは最強
+        if self.rank.isdigit():
+            return int(self.rank)
+        return self.rank_map[self.rank]
+
+    def is_world_best(self):
+        return self.suit == 'スペード' and self.rank == 'A'
+
+    def __str__(self):
+        if self.is_joker:
+            return 'ジョーカー'
+        return f'{self.suit}の{self.rank}'
+
+
+class Deck:
+    def __init__(self):
+        suits = ['スペード', 'ハート', 'クラブ', 'ダイヤ']
+        ranks = ['A'] + [str(n) for n in range(2, 11)] + ['J', 'Q', 'K']
+        self.cards = [Card(s, r) for s in suits for r in ranks]
+        self.cards.append(Card(None, None, is_joker=True))  # ジョーカー追加
+        random.shuffle(self.cards)
+
+    def deal(self, player_count):
+        hands = [[] for _ in range(player_count)]
+        for i, card in enumerate(self.cards):
+            hands[i % player_count].append(card)
+        return hands
+
+
+class Player:
+    def __init__(self, name, cards):
+        self.name = name
+        self.hand = cards
+        self.stock = []
+
+    def has_cards(self):
+        return len(self.hand) > 0 or len(self.stock) > 0
+
+    def draw(self):
+        if len(self.hand) == 0:
+            random.shuffle(self.stock)
+            self.hand = self.stock
+            self.stock = []
+        return self.hand.pop(0)
+
+    def gain_cards(self, cards):
+        self.stock.extend(cards)
+
+    def total_cards(self):
+        return len(self.hand) + len(self.stock)
+
+
+class WarGame:
+    def __init__(self):
+        print("戦争を開始します。")
+
+        while True:
+            count = int(input("プレイヤーの人数を入力してください（2〜5）: "))
+            if 2 <= count <= 5:
+                break
+
+        names = []
+        for i in range(count):
+            names.append(input(f"プレイヤー{i+1}の名前を入力してください: "))
+
+        deck = Deck()
+        hands = deck.deal(count)
+
+        self.players = [
+            Player(names[i], hands[i])
+            for i in range(count)
+        ]
+
+        self.field = []
+        print("カードが配られました。")
+
+    def play(self):
+        while all(p.has_cards() for p in self.players):
+            print("戦争！")
+
+            round_cards = []
+
+            for player in self.players:
+                card = player.draw()
+                self.field.append(card)
+                round_cards.append((player, card))
+                print(f'{player.name}のカードは{card}です。')
+
+            # ジョーカー判定（最優先）
+            jokers = [(p, c) for p, c in round_cards if c.is_joker]
+            if jokers:
+                winner = jokers[0][0]
+                print(f'{winner.name}がジョーカーで勝ちました。')
+                winner.gain_cards(self.field)
+                self.field.clear()
+                continue
+
+            # 最大値取得
+            max_value = max(card.value() for _, card in round_cards)
+            candidates = [(p, c) for p, c in round_cards if c.value() == max_value]
+
+            # スペードA（世界一）判定
+            world_best = [
+                p for p, c in candidates if c.is_world_best()
+            ]
+            if world_best:
+                winner = world_best[0]
+                print(f'{winner.name}が世界一（スペードのA）で勝ちました。')
+                winner.gain_cards(self.field)
+                self.field.clear()
+                continue
+
+            # 通常勝敗
+            if len(candidates) == 1:
+                winner = candidates[0][0]
+                print(f'{winner.name}が勝ちました。{winner.name}はカードを{len(self.field)}枚もらいました。')
+                winner.gain_cards(self.field)
+                self.field.clear()
+            else:
+                print("引き分けです。")
+                continue
+
+        self.finish()
+
+    def finish(self):
+        print("戦争を終了します。")
+
+        results = sorted(
+            self.players,
+            key=lambda p: p.total_cards(),
+            reverse=True
+        )
+
+        for p in self.players:
+            print(f'{p.name}の手札の枚数は{p.total_cards()}枚です。')
+
+        for i, p in enumerate(results):
+            print(f'{p.name}が{i+1}位です。')
+
+
+# 実行
+game = WarGame()
+game.play()
