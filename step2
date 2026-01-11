@@ -1,0 +1,91 @@
+import random
+
+print("戦争を開始します。")
+
+# カード準備
+suits = ['スペード', 'ハート', 'クラブ', 'ダイヤ']
+ranks = ['A'] + [str(n) for n in range(2, 11)] + ['J', 'Q', 'K']
+deck = [f'{suit}の{rank}' for suit in suits for rank in ranks]
+random.shuffle(deck)
+
+# 山札
+player1 = deck[:26]
+player2 = deck[26:]
+
+# 獲得札
+stock1 = []
+stock2 = []
+
+field = []
+
+print("カードが配られました。")
+
+rank_map = {
+    'A': 14,
+    'K': 13,
+    'Q': 12,
+    'J': 11
+}
+
+def card_value(card):
+    rank = card.split('の')[1]
+    if rank.isdigit():
+        return int(rank)
+    return rank_map[rank]
+
+while True:
+    # 山札が尽きたら補充
+    if len(player1) == 0:
+        if len(stock1) == 0:
+            break
+        random.shuffle(stock1)
+        player1 = stock1
+        stock1 = []
+
+    if len(player2) == 0:
+        if len(stock2) == 0:
+            break
+        random.shuffle(stock2)
+        player2 = stock2
+        stock2 = []
+
+    print("戦争！")
+
+    card1 = player1.pop(0)
+    card2 = player2.pop(0)
+
+    field.append(card1)
+    field.append(card2)
+
+    print(f'プレイヤー1のカードは{card1}です。')
+    print(f'プレイヤー2のカードは{card2}です。')
+
+    v1 = card_value(card1)
+    v2 = card_value(card2)
+
+    if v1 > v2:
+        print(f'プレイヤー1が勝ちました。プレイヤー1はカードを{len(field)}枚もらいました。')
+        stock1.extend(field)
+        field.clear()
+
+    elif v1 < v2:
+        print(f'プレイヤー2が勝ちました。プレイヤー2はカードを{len(field)}枚もらいました。')
+        stock2.extend(field)
+        field.clear()
+
+    else:
+        print("引き分けです。")
+        # field を保持したまま次の戦争へ
+        continue
+
+# 終了処理
+print("戦争を終了します。")
+print(f'プレイヤー1の手札の枚数は{len(player1) + len(stock1)}枚です。')
+print(f'プレイヤー2の手札の枚数は{len(player2) + len(stock2)}枚です。')
+
+if len(player1) + len(stock1) > len(player2) + len(stock2):
+    print("プレイヤー1が1位、プレイヤー2が2位です。")
+elif len(player1) + len(stock1) < len(player2) + len(stock2):
+    print("プレイヤー2が1位、プレイヤー1が2位です。")
+else:
+    print("引き分けです。")
